@@ -4,9 +4,10 @@ from sqlalchemy.orm import contains_eager, joinedload, subqueryload_all
 
 from zeus import auth
 from zeus.config import db
-from zeus.models import Author, Build, Email, Repository, Revision, Source
+from zeus.models import Author, Build, Email, Repository, Source
 from zeus.pubsub.utils import publish
 from zeus.vcs.base import UnknownRevision
+from zeus.utils.revisions import identify_revision
 
 from .base_repository import BaseRepositoryResource
 from ..schemas import BuildSchema, BuildCreateSchema
@@ -14,36 +15,6 @@ from ..schemas import BuildSchema, BuildCreateSchema
 build_create_schema = BuildCreateSchema(strict=True)
 build_schema = BuildSchema(strict=True)
 builds_schema = BuildSchema(many=True, strict=True)
-
-
-def identify_revision(repository, treeish):
-    """
-    Attempt to transform a a commit-like reference into a valid revision.
-    """
-    # try to find it from the database first
-    if len(treeish) == 40:
-        revision = Revision.query.filter(
-            Revision.repository_id == repository.id,
-            Revision.sha == treeish,
-        ).first()
-        if revision:
-            return revision
-
-    vcs = repository.get_vcs()
-    if not vcs:
-        return
-
-    vcs.ensure(update_if_exists=False)
-
-    try:
-        commit = next(vcs.log(parent=treeish, limit=1))
-    except UnknownRevision:
-        vcs.update()
-        commit = next(vcs.log(parent=treeish, limit=1))
-
-    revision, _ = commit.save(repository)
-
-    return revision
 
 
 class RepositoryBuildsResource(BaseRepositoryResource):

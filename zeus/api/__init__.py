@@ -17,6 +17,8 @@ app.add_resource(
 app.add_resource(
     '/repos/<provider>/<owner_name>/<repo_name>/builds', r.RepositoryBuildsResource)
 app.add_resource(
+    '/repos/<provider>/<owner_name>/<repo_name>/change-requests', r.RepositoryChangeRequestsResource)
+app.add_resource(
     '/repos/<provider>/<owner_name>/<repo_name>/hooks', r.RepositoryHooksResource)
 app.add_resource(
     '/repos/<provider>/<owner_name>/<repo_name>/revisions', r.RepositoryRevisionsResource)

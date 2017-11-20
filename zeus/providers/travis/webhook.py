@@ -80,8 +80,8 @@ class TravisWebhookView(BaseHook):
                 'travis.webhook-invalid-signature', exc_info=True)
             return Response(status=400)
 
-        domain = (hook.data or {}).get('domain', 'api.travis-ci.org')
-        public_key = get_travis_public_key(domain)
+        api_domain = (hook.data or {}).get('domain', 'api.travis-ci.org')
+        public_key = get_travis_public_key(api_domain)
         try:
             verify_signature(public_key, signature, payload.encode('utf-8'))
         except InvalidSignature:
@@ -104,6 +104,11 @@ class TravisWebhookView(BaseHook):
         domain = urlparse(data['url']).netloc
 
         if payload['pull_request']:
+            data['change_request'] = {
+                'external_id': payload['pull_request_number'],
+                'provider': 'github',
+            }
+
             data['label'] = 'PR #{}'.format(payload['pull_request_number'])
 
         response = upsert_build(
